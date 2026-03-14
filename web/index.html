@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMS - Smart Inventory</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 3D Background Canvas -->
+    <canvas id="bg"></canvas>
+
+    <!-- Glassmorphism overlay UI -->
+    <div class="ui-layer">
+        
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <span>IMS<span class="highlight">.</span></span>
+            </div>
+            <div class="nav-actions">
+                <!-- User requested Login / Sign Up buttons on the right top corner -->
+                <button class="btn btn-ghost">Login</button>
+                <button class="btn btn-primary">Sign Up</button>
+            </div>
+        </nav>
+
+        <!-- Main Hero Section -->
+        <main class="hero">
+            <div class="hero-content">
+                <div class="badge">Next Gen Logistics</div>
+                <h1 class="title">Intelligent <br/><span class="text-gradient">Inventory Visualization</span></h1>
+                <p class="subtitle">Experience your supply chain in real-time 3D. Track, manage, and optimize your warehouses with unprecedented clarity and speed.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-large">Explore Dashboard</button>
+                    <button class="btn btn-outline btn-large">Watch Demo</button>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>
