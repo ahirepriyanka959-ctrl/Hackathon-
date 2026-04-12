@@ -8,7 +8,7 @@ router.use(auth);
 // List products with optional filters
 router.get('/', async (req, res) => {
   try {
-    const { category_id, search, low_stock } = req.query;
+    const { category_id, search, low_stock, out_of_stock } = req.query;
     let sql = `
       SELECT p.*, pc.name AS category_name, u.name AS uom_name, u.code AS uom_code
       FROM products p
@@ -26,7 +26,13 @@ router.get('/', async (req, res) => {
       const [quants] = await db.query('SELECT product_id, SUM(quantity) AS total FROM stock_quant GROUP BY product_id');
       const byProduct = {};
       quants.forEach(q => { byProduct[q.product_id] = parseFloat(q.total); });
-      products = products.filter(p => (byProduct[p.id] || 0) <= (p.min_stock_qty || 0));
+      products = products.filter(p => (byProduct[p.id] || 0) <= (p.min_stock_qty || 0) && (byProduct[p.id] || 0) > 0);
+    }
+    if (out_of_stock === 'true') {
+      const [quants] = await db.query('SELECT product_id, SUM(quantity) AS total FROM stock_quant GROUP BY product_id');
+      const byProduct = {};
+      quants.forEach(q => { byProduct[q.product_id] = parseFloat(q.total); });
+      products = products.filter(p => (byProduct[p.id] || 0) <= 0);
     }
     res.json(products);
   } catch (err) {

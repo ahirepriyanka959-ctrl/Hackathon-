@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [transitioning, setTransitioning] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -41,6 +42,7 @@ export function AuthProvider({ children }) {
       AsyncStorage.setItem(TOKEN_KEY, t),
       AsyncStorage.setItem(USER_KEY, JSON.stringify(u)),
     ]);
+    setTransitioning(true);
     setToken(t);
     setUser(u);
     return data;
@@ -55,6 +57,7 @@ export function AuthProvider({ children }) {
       AsyncStorage.setItem(TOKEN_KEY, t),
       AsyncStorage.setItem(USER_KEY, JSON.stringify(u)),
     ]);
+    setTransitioning(true);
     setToken(t);
     setUser(u);
     return data;
@@ -72,8 +75,12 @@ export function AuthProvider({ children }) {
     AsyncStorage.setItem(USER_KEY, JSON.stringify(u));
   };
 
+  const completeTransition = () => {
+    setTransitioning(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, loading, transitioning, completeTransition, login, register, logout, updateUser, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

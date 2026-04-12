@@ -26,42 +26,45 @@ const ProductsStackNav = createNativeStackNavigator();
 
 function ProductsStack() {
   const { theme } = useTheme();
+  const navigation = useNavigation();
   return (
-    <ProductsStackNav.Navigator screenOptions={{ headerStyle: { backgroundColor: theme.surface }, headerTintColor: theme.text }}>
+    <ProductsStackNav.Navigator screenOptions={{ 
+      headerStyle: { backgroundColor: theme.surface }, 
+      headerTintColor: theme.text,
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Dashboard')} style={{ marginLeft: 8, marginRight: 16 }}>
+          <Ionicons name="arrow-back" size={24} color={theme.text} />
+        </TouchableOpacity>
+      )
+    }}>
       <ProductsStackNav.Screen name="ProductsList" component={ProductsScreen} options={{ title: 'Products' }} />
       <ProductsStackNav.Screen name="ProductForm" component={ProductFormScreen} options={{ title: 'Add / Edit Product' }} />
     </ProductsStackNav.Navigator>
   );
 }
 
-function OperationsTabs() {
-  const { theme } = useTheme();
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textSecondary,
-        tabBarStyle: { backgroundColor: theme.surface, borderTopColor: theme.border },
-        headerStyle: { backgroundColor: theme.surface },
-        headerTintColor: theme.text,
-      }}
-    >
-      <Tab.Screen name="OperationsList" component={OperationsScreen} options={{ title: 'Operations', tabBarLabel: 'Operations' }} />
-      <Tab.Screen name="Receipt" component={ReceiptScreen} options={{ title: 'New Receipt', tabBarLabel: 'Receipt' }} />
-      <Tab.Screen name="Delivery" component={DeliveryScreen} options={{ title: 'New Delivery', tabBarLabel: 'Delivery' }} />
-      <Tab.Screen name="Internal" component={InternalTransferScreen} options={{ title: 'Internal Transfer', tabBarLabel: 'Transfer' }} />
-      <Tab.Screen name="Adjustment" component={AdjustmentScreen} options={{ title: 'Stock Adjustment', tabBarLabel: 'Adjust' }} />
-    </Tab.Navigator>
-  );
-}
+// OperationsTabs removed in favor of operations FAB
 
 const OperationsStackNav = createNativeStackNavigator();
 
 function OperationsStack() {
   const { theme } = useTheme();
+  const navigation = useNavigation();
   return (
-    <OperationsStackNav.Navigator screenOptions={{ headerStyle: { backgroundColor: theme.surface }, headerTintColor: theme.text }}>
-      <OperationsStackNav.Screen name="OperationsTabs" component={OperationsTabs} options={{ headerShown: false }} />
+    <OperationsStackNav.Navigator screenOptions={{ 
+      headerStyle: { backgroundColor: theme.surface }, 
+      headerTintColor: theme.text,
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Dashboard')} style={{ marginLeft: 8, marginRight: 16 }}>
+          <Ionicons name="arrow-back" size={24} color={theme.text} />
+        </TouchableOpacity>
+      )
+    }}>
+      <OperationsStackNav.Screen name="OperationsList" component={OperationsScreen} options={{ title: 'Operations' }} />
+      <OperationsStackNav.Screen name="Receipt" component={ReceiptScreen} options={{ title: 'New Receipt' }} />
+      <OperationsStackNav.Screen name="Delivery" component={DeliveryScreen} options={{ title: 'New Delivery' }} />
+      <OperationsStackNav.Screen name="Internal" component={InternalTransferScreen} options={{ title: 'Internal Transfer' }} />
+      <OperationsStackNav.Screen name="Adjustment" component={AdjustmentScreen} options={{ title: 'Stock Adjustment' }} />
       <OperationsStackNav.Screen name="MoveHistory" component={MoveHistoryScreen} options={{ title: 'Move History' }} />
     </OperationsStackNav.Navigator>
   );

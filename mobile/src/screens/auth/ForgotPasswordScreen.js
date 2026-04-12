@@ -7,22 +7,25 @@ import { Ionicons } from '@expo/vector-icons';
 export default function ForgotPasswordScreen({ navigation }) {
   const { theme } = useTheme();
   const [step, setStep] = useState(1);
-  const [email, setEmail] = useState('');
+  const [contactType, setContactType] = useState('email');
+  const [contactValue, setContactValue] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const s = styles(theme);
 
   const requestOTP = async () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Enter your email.');
+    if (!contactValue.trim()) {
+      Alert.alert('Error', `Enter your ${contactType === 'email' ? 'email' : 'mobile number'}.`);
       return;
     }
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/forgot-password', { email: email.trim() });
-      Alert.alert('OTP Sent', data.otp ? `Use OTP: ${data.otp} (dev only)` : 'Check your email for the OTP.');
-      setStep(2);
+      const payload = contactType === 'email' ? { email: contactValue.trim() } : { phone: contactValue.trim() };
+      const { data } = await api.post('/auth/forgot-password', payload);
+      Alert.alert('OTP Sent', data.otp ? `Use OTP: ${data.otp} (dev only)` : `Check your ${contactType === 'email' ? 'email' : 'mobile'} for the OTP.`);
+      setStep(3);
     } catch (err) {
       Alert.alert('Error', err?.message || 'Failed to send OTP.');
     } finally {
@@ -37,7 +40,10 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', { email: email.trim(), otp, new_password: newPassword });
+      const payload = contactType === 'email' 
+        ? { email: contactValue.trim(), otp, new_password: newPassword }
+        : { phone: contactValue.trim(), otp, new_password: newPassword };
+      await api.post('/auth/reset-password', payload);
       Alert.alert('Success', 'Password reset. You can sign in now.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (err) {
       Alert.alert('Error', err?.message || 'Reset failed.');
@@ -56,32 +62,55 @@ export default function ForgotPasswordScreen({ navigation }) {
           <Ionicons name="key" size={40} color={theme.primary} />
         </View>
         <Text style={s.title}>Reset password</Text>
-        <Text style={s.subtitle}>{step === 1 ? 'We\'ll send an OTP to your email' : 'Enter OTP and new password'}</Text>
+        <Text style={s.subtitle}>{step === 1 ? 'Choose reset method' : step === 2 ? 'We\'ll send an OTP to verify' : 'Enter OTP and new password'}</Text>
 
-        {step === 1 ? (
+        {step === 1 && (
+          <View style={s.optionsContainer}>
+            <TouchableOpacity style={s.optionBtn} onPress={() => { setContactType('email'); setStep(2); }}>
+              <Ionicons name="mail-outline" size={24} color={theme.primary} />
+              <Text style={[s.optionText, { color: theme.text }]}>Reset via Email</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.optionBtn} onPress={() => { setContactType('phone'); setStep(2); }}>
+              <Ionicons name="call-outline" size={24} color={theme.primary} />
+              <Text style={[s.optionText, { color: theme.text }]}>Reset via Mobile Number</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {step === 2 && (
           <>
             <TextInput
               style={s.input}
-              placeholder="Email"
+              placeholder={contactType === 'email' ? 'Enter Email' : 'Enter Mobile Number'}
               placeholderTextColor={theme.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
+              value={contactValue}
+              onChangeText={setContactValue}
+              keyboardType={contactType === 'email' ? 'email-address' : 'phone-pad'}
               autoCapitalize="none"
             />
             <TouchableOpacity style={s.button} onPress={requestOTP} disabled={loading}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.buttonText}>Send OTP</Text>}
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => setStep(1)}>
+              <Text style={s.link}>Back to options</Text>
+            </TouchableOpacity>
           </>
-        ) : (
+        )}
+
+        {step === 3 && (
           <>
             <TextInput style={s.input} placeholder="OTP (6 digits)" placeholderTextColor={theme.textSecondary} value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
-            <TextInput style={s.input} placeholder="New password" placeholderTextColor={theme.textSecondary} value={newPassword} onChangeText={setNewPassword} secureTextEntry />
+            <View style={s.passwordWrap}>
+              <TextInput style={[s.input, s.passwordInput]} placeholder="New password" placeholderTextColor={theme.textSecondary} value={newPassword} onChangeText={setNewPassword} secureTextEntry={!showPassword} />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eye}>
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity style={s.button} onPress={resetPassword} disabled={loading}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.buttonText}>Reset Password</Text>}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setStep(1)}>
-              <Text style={s.link}>Change email</Text>
+            <TouchableOpacity onPress={() => setStep(2)}>
+              <Text style={s.link}>Change {contactType === 'email' ? 'email' : 'mobile'}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -101,5 +130,11 @@ const styles = (theme) =>
     input: { backgroundColor: theme.surfaceVariant, borderRadius: 12, padding: 16, fontSize: 16, color: theme.text, marginBottom: 14 },
     button: { backgroundColor: theme.primary, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8, marginBottom: 12 },
     buttonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
-    link: { color: theme.primary, textAlign: 'center', fontSize: 14 },
+    link: { color: theme.primary, textAlign: 'center', fontSize: 14, marginTop: 12 },
+    optionsContainer: { gap: 12, marginTop: 8 },
+    optionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.surfaceVariant, padding: 16, borderRadius: 12, gap: 12 },
+    optionText: { fontSize: 16, fontWeight: '600' },
+    passwordWrap: { position: 'relative', marginBottom: 8 },
+    passwordInput: { paddingRight: 48, marginBottom: 0 },
+    eye: { position: 'absolute', right: 14, top: 14 },
   });

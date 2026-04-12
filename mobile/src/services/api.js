@@ -13,6 +13,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       // Optionally trigger logout
     }
-    return Promise.reject(err.response?.data?.error || err.message);
+    const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Unknown network error';
+    return Promise.reject(new Error(errorMessage));
   }
 );

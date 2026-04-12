@@ -11,18 +11,20 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const s = styles(theme);
 
   const handleLogin = async () => {
+    setErrorMessage('');
     if (!email.trim() || !password) {
-      Alert.alert('Error', 'Please enter email and password.');
+      setErrorMessage('Please fill all fields.');
       return;
     }
     setLoading(true);
     try {
       await login(email.trim(), password);
     } catch (err) {
-      Alert.alert('Login Failed', err?.message || 'Invalid credentials.');
+      setErrorMessage(err?.message || 'Invalid password or email.');
     } finally {
       setLoading(false);
     }
@@ -36,6 +38,8 @@ export default function LoginScreen({ navigation }) {
         </View>
         <Text style={s.title}>IMS Inventory</Text>
         <Text style={s.subtitle}>Sign in to continue</Text>
+
+        {!!errorMessage && <Text style={s.errorText}>{errorMessage}</Text>}
 
         <TextInput
           style={s.input}
@@ -84,6 +88,7 @@ const styles = (theme) =>
     logo: { alignSelf: 'center', width: 80, height: 80, borderRadius: 40, backgroundColor: theme.surfaceVariant, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
     title: { fontSize: 24, fontWeight: '800', color: theme.text, textAlign: 'center', marginBottom: 4 },
     subtitle: { fontSize: 15, color: theme.textSecondary, textAlign: 'center', marginBottom: 28 },
+    errorText: { color: theme.error, fontSize: 14, textAlign: 'center', marginBottom: 16, marginTop: -12 },
     input: { backgroundColor: theme.surfaceVariant, borderRadius: 12, padding: 16, fontSize: 16, color: theme.text, marginBottom: 14 },
     passwordWrap: { position: 'relative', marginBottom: 8 },
     passwordInput: { paddingRight: 48 },

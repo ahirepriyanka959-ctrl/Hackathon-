@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "IMS Inventory",
+    "name": "IMS",
     "slug": "ims-inventory",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#0f172a"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.odoo.ims"
@@ -25,6 +27,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9847127b-2e4f-4beb-b77e-213012858fa9"
+      }
     }
   }
 }

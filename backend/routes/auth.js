@@ -30,6 +30,7 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ id: rows[0].id, email: rows[0].email }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ user: rows[0], token });
   } catch (err) {
+    console.error('REGISTER ERROR:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -47,6 +48,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ user, token });
   } catch (err) {
+    console.error('LOGIN ERROR:', err);
     res.status(500).json({ error: err.message });
   }
 });

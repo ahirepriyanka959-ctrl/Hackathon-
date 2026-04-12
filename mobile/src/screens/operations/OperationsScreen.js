@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ScrollView, Animated, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
@@ -9,13 +9,30 @@ const typeLabels = { receipt: 'Receipt', delivery: 'Delivery', internal: 'Intern
 const typeIcons = { receipt: 'arrow-down-circle', delivery: 'arrow-up-circle', internal: 'swap-horizontal', adjustment: 'construct' };
 const stateColors = { draft: '#94a3b8', waiting: '#f59e0b', ready: '#0ea5e9', done: '#22c55e', canceled: '#ef4444' };
 
-export default function OperationsScreen({ navigation }) {
+export default function OperationsScreen({ navigation, route }) {
   const { theme } = useTheme();
   const [pickings, setPickings] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterType, setFilterType] = useState('');
+  const [filterType, setFilterType] = useState(route.params?.filterType || '');
   const [filterState, setFilterState] = useState('');
+  const [fabOpen, setFabOpen] = useState(false);
+  const fabAnimation = React.useRef(new Animated.Value(0)).current;
   const s = styles(theme);
+
+  const toggleFab = () => {
+    const toValue = fabOpen ? 0 : 1;
+    Animated.timing(fabAnimation, {
+      toValue,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+    setFabOpen(!fabOpen);
+  };
+
+  const fabRotation = fabAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg']
+  });
 
   const fetchPickings = useCallback(async () => {
     try {
@@ -33,8 +50,13 @@ export default function OperationsScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
+      if (route.params?.filterType !== undefined) {
+        setFilterType(route.params.filterType);
+        // Clear param after applying to avoid sticking if navigated normally
+        navigation.setParams({ filterType: undefined });
+      }
       fetchPickings();
-    }, [fetchPickings])
+    }, [fetchPickings, route.params?.filterType])
   );
 
   const renderItem = ({ item }) => (
@@ -84,6 +106,60 @@ export default function OperationsScreen({ navigation }) {
         ListEmptyComponent={<Text style={s.empty}>No operations</Text>}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchPickings(); }} tintColor={theme.primary} />}
       />
+
+      {/* Speed Dial Overlay */}
+      {fabOpen && (
+        <TouchableOpacity style={s.fabOverlay} activeOpacity={1} onPress={toggleFab} />
+      )}
+
+      {/* Radial Options */}
+      <View style={[StyleSheet.absoluteFill, { zIndex: 20 }]} pointerEvents="box-none">
+        {[
+          { label: 'Receipt', nav: 'Receipt', icon: 'arrow-down-circle' },
+          { label: 'Delivery', nav: 'Delivery', icon: 'arrow-up-circle' },
+          { label: 'Transfer', nav: 'Internal', icon: 'swap-horizontal' },
+          { label: 'Adjust', nav: 'Adjustment', icon: 'construct' }
+        ].map((opt, i) => {
+          const angle = (Math.PI / 2) * (i / 3);
+          const radius = 100;
+          return (
+            <Animated.View key={opt.nav} style={[s.radialItemWrapper, {
+              opacity: fabAnimation,
+              transform: [
+                { translateX: fabAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, -radius * Math.cos(angle)] }) },
+                { translateY: fabAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, -radius * Math.sin(angle)] }) },
+                { scale: fabAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }
+              ]
+            }]}>
+              <Pressable
+                onPress={() => { toggleFab(); navigation.navigate(opt.nav); }}
+                style={({ pressed, hovered }) => [
+                  s.fabSubButton,
+                  { transform: [{ scale: pressed ? 0.9 : hovered ? 1.15 : 1 }] }
+                ]}
+              >
+                {({ hovered }) => (
+                  <>
+                    <Ionicons name={opt.icon} size={20} color="#fff" />
+                    {hovered && (
+                      <View style={s.tooltip}>
+                        <Text style={s.tooltipText}>{opt.label}</Text>
+                      </View>
+                    )}
+                  </>
+                )}
+              </Pressable>
+            </Animated.View>
+          );
+        })}
+      </View>
+
+      {/* Main FAB */}
+      <TouchableOpacity activeOpacity={0.8} style={s.fabMain} onPress={toggleFab}>
+        <Animated.View style={{ transform: [{ rotate: fabRotation }] }}>
+          <Ionicons name="add" size={32} color="#fff" />
+        </Animated.View>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -109,4 +185,10 @@ const styles = (theme) =>
     warehouse: { fontSize: 13, color: theme.textSecondary, marginTop: 4 },
     partner: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
     empty: { textAlign: 'center', color: theme.textSecondary, marginTop: 40 },
+    fabOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 10 },
+    radialItemWrapper: { position: 'absolute', bottom: 32, right: 28, alignItems: 'center', justifyContent: 'center', width: 44, height: 44, zIndex: 20 },
+    fabSubButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.primary + 'E6', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowOffset: {height: 2}, shadowRadius: 4, elevation: 5 },
+    tooltip: { position: 'absolute', right: 54, backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, flexWrap: 'nowrap' },
+    tooltipText: { color: '#fff', fontSize: 13, fontWeight: '700', whiteSpace: 'nowrap' },
+    fabMain: { position: 'absolute', bottom: 24, right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.4, shadowOffset: {height: 4}, shadowRadius: 6, elevation: 6, zIndex: 30 },
   });

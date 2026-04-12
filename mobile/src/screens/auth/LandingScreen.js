@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useTheme } from '../../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -66,6 +66,38 @@ export default function LandingScreen({ navigation }) {
   const { theme } = useTheme();
   const s = styles(theme);
 
+  const paragraphs = [
+    "Experience your supply chain in real-time 3D. Track, manage, and optimize with unprecedented clarity.",
+    "Forecast inventory needs automatically. Prevent stockouts and reduce excess inventory dynamically.",
+    "Seamlessly integrate multi-warehouse logistics. Monitor movements with next-generation visualizations."
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(rotateAnim, { toValue: 1, duration: 500, useNativeDriver: true })
+      ]).start(() => {
+        setCurrentIndex((prev) => (prev + 1) % paragraphs.length);
+        rotateAnim.setValue(-1);
+        Animated.parallel([
+          Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.timing(rotateAnim, { toValue: 0, duration: 500, useNativeDriver: true })
+        ]).start();
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-90deg', '0deg', '90deg']
+  });
+
   return (
     <View style={s.container}>
       {/* 3D Background Canvas */}
@@ -106,9 +138,9 @@ export default function LandingScreen({ navigation }) {
         <Text style={s.title}>Intelligent</Text>
         <Text style={s.titleGradient}>Inventory Viz.</Text>
         
-        <Text style={s.subtitle}>
-          Experience your supply chain in real-time 3D. Track, manage, and optimize with unprecedented clarity.
-        </Text>
+        <Animated.Text style={[s.subtitle, { opacity: fadeAnim, transform: [{ rotateX: spin }] }]}>
+          {paragraphs[currentIndex]}
+        </Animated.Text>
 
         <TouchableOpacity style={s.ctaContainer} onPress={() => navigation.navigate('Login')}>
           <LinearGradient colors={['rgba(79, 172, 254, 0.2)', 'rgba(0, 242, 254, 0.2)']} style={s.ctaButton}>

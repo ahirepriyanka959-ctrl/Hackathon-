@@ -11,28 +11,43 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState('warehouse_staff');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const s = styles(theme);
 
   const handleRegister = async () => {
+    setErrorMessage('');
     if (!full_name.trim() || !email.trim() || !password) {
-      Alert.alert('Error', 'Please fill all required fields.');
+      setErrorMessage('Please fill all required fields.');
       return;
     }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setErrorMessage('Please provide a valid email address.');
+      return;
+    }
+
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
+      setErrorMessage('Passwords do not match.');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters.');
+    
+    // min 6 chars, >= 1 uppercase or lowercase, >= 1 number, >= 1 special char
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{6,}$/;
+    if (!passwordRegex.test(password)) {
+      setErrorMessage('Password must be > 6 chars and include letters, numbers, and special characters.');
       return;
     }
+
     setLoading(true);
     try {
       await register(email.trim(), password, full_name.trim(), role);
     } catch (err) {
-      Alert.alert('Registration Failed', err?.message || 'Could not create account.');
+      setErrorMessage(err?.message || 'Could not create account.');
     } finally {
       setLoading(false);
     }
@@ -45,10 +60,22 @@ export default function RegisterScreen({ navigation }) {
           <Text style={s.title}>Create account</Text>
           <Text style={s.subtitle}>Join IMS Inventory</Text>
 
+          {!!errorMessage && <Text style={s.errorText}>{errorMessage}</Text>}
+
           <TextInput style={s.input} placeholder="Full name" placeholderTextColor={theme.textSecondary} value={full_name} onChangeText={setFullName} />
           <TextInput style={s.input} placeholder="Email" placeholderTextColor={theme.textSecondary} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-          <TextInput style={s.input} placeholder="Password (min 6)" placeholderTextColor={theme.textSecondary} value={password} onChangeText={setPassword} secureTextEntry />
-          <TextInput style={s.input} placeholder="Confirm password" placeholderTextColor={theme.textSecondary} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+          <View style={s.passwordWrap}>
+            <TextInput style={[s.input, s.passwordInput]} placeholder="Password (min 6)" placeholderTextColor={theme.textSecondary} value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eye}>
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          <View style={s.passwordWrap}>
+            <TextInput style={[s.input, s.passwordInput]} placeholder="Confirm password" placeholderTextColor={theme.textSecondary} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirmPassword} />
+            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={s.eye}>
+              <Ionicons name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
 
           <View style={s.roleRow}>
             <Text style={s.label}>Role</Text>
@@ -82,7 +109,11 @@ const styles = (theme) =>
     card: { backgroundColor: theme.surface, borderRadius: 20, padding: 28 },
     title: { fontSize: 24, fontWeight: '800', color: theme.text, marginBottom: 4 },
     subtitle: { fontSize: 15, color: theme.textSecondary, marginBottom: 24 },
+    errorText: { color: theme.error, fontSize: 13, textAlign: 'center', marginBottom: 16, marginTop: -12 },
     input: { backgroundColor: theme.surfaceVariant, borderRadius: 12, padding: 16, fontSize: 16, color: theme.text, marginBottom: 14 },
+    passwordWrap: { position: 'relative', marginBottom: 6 },
+    passwordInput: { paddingRight: 48, marginBottom: 8 },
+    eye: { position: 'absolute', right: 16, top: 16 },
     label: { fontSize: 14, color: theme.textSecondary, marginBottom: 8 },
     roleRow: { marginBottom: 20 },
     roleOptions: { flexDirection: 'row', gap: 12 },

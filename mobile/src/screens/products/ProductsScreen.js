@@ -5,13 +5,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function ProductsScreen({ navigation }) {
+export default function ProductsScreen({ navigation, route }) {
   const { theme } = useTheme();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(route.params?.lowStockOnly || false);
+  const [outOfStockOnly, setOutOfStockOnly] = useState(route.params?.outOfStockOnly || false);
   const s = styles(theme);
 
   const fetchProducts = useCallback(async () => {
@@ -19,6 +20,7 @@ export default function ProductsScreen({ navigation }) {
       const params = {};
       if (search) params.search = search;
       if (lowStockOnly) params.low_stock = 'true';
+      if (outOfStockOnly) params.out_of_stock = 'true';
       const { data } = await api.get('/products', { params });
       setProducts(data);
     } catch (e) {
@@ -27,13 +29,17 @@ export default function ProductsScreen({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [search, lowStockOnly]);
+  }, [search, lowStockOnly, outOfStockOnly]);
 
   useFocusEffect(
     useCallback(() => {
+      if (route.params) {
+        setLowStockOnly(!!route.params.lowStockOnly);
+        setOutOfStockOnly(!!route.params.outOfStockOnly);
+      }
       setLoading(true);
       fetchProducts();
-    }, [fetchProducts])
+    }, [fetchProducts, route.params])
   );
 
   const onRefresh = () => {
@@ -71,10 +77,17 @@ export default function ProductsScreen({ navigation }) {
         </View>
         <TouchableOpacity
           style={[s.filterBtn, lowStockOnly && s.filterBtnActive]}
-          onPress={() => setLowStockOnly(!lowStockOnly)}
+          onPress={() => { setLowStockOnly(!lowStockOnly); setOutOfStockOnly(false); }}
         >
           <Ionicons name="alert-circle" size={20} color={lowStockOnly ? '#fff' : theme.warning} />
           <Text style={[s.filterText, lowStockOnly && s.filterTextActive]}>Low stock</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[s.filterBtn, outOfStockOnly && s.filterBtnActive, { marginLeft: 8 }]}
+          onPress={() => { setOutOfStockOnly(!outOfStockOnly); setLowStockOnly(false); }}
+        >
+          <Ionicons name="close-circle" size={20} color={outOfStockOnly ? '#fff' : theme.error} />
+          <Text style={[s.filterText, outOfStockOnly && s.filterTextActive]}>Out of stock</Text>
         </TouchableOpacity>
       </View>
 

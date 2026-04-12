@@ -25,7 +25,11 @@ export default function InternalTransferScreen() {
     });
   }, [warehouses]);
 
-  const allLocs = warehouses.flatMap((w) => (locations[w.id] || []).map((l) => ({ ...l, warehouse_name: w.name })));
+  const allLocs = [];
+  warehouses.forEach((w) => {
+    const wLocs = locations[w.id] || [];
+    wLocs.forEach((l) => allLocs.push({ ...l, warehouse_name: w.name }));
+  });
 
   const addLine = () => setMoves((m) => [...m, { product_id: '', quantity: '' }]);
   const removeLine = (i) => setMoves((m) => m.filter((_, idx) => idx !== i));
